@@ -3,14 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HOLON — Carte Géoéconomique</title>
+<title>HOLON — Géoéconomie</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Cinzel:wght@400;600&family=Inter:wght@300;400&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
 <style>
 :root {
-  --bg: #0d1117;
-  --bg-panel: #0f1520;
+  --bg: #080d12;
   --teal: #5cbfb0;
   --teal-dim: #3a8a7f;
   --teal-glow: rgba(92,191,176,0.12);
@@ -19,128 +18,181 @@
   --txt2: #8fa0b0;
   --muted: #4a5a6a;
   --border: rgba(92,191,176,0.15);
+  --panel-bg: rgba(9,14,20,0.97);
 }
 *{margin:0;padding:0;box-sizing:border-box;}
-html,body{height:100%;overflow:hidden;}
-body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;font-weight:300;}
+html,body{height:100%;overflow:hidden;background:var(--bg);}
+body{font-family:'Inter',sans-serif;font-weight:300;color:var(--txt);}
 
 /* LOADING */
 #loading{
   position:fixed;inset:0;background:var(--bg);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;
-  z-index:200;transition:opacity .5s;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;
+  z-index:300;transition:opacity .6s;
 }
-.ld-logo{font-family:'Cinzel',serif;font-size:30px;letter-spacing:.35em;animation:fu .6s .3s both;}
-.ld-sub{font-family:'Cormorant Garamond',serif;font-size:13px;letter-spacing:.22em;color:var(--teal);font-style:italic;animation:fu .6s .6s both;}
-.ld-bar{width:140px;height:1px;background:rgba(92,191,176,.15);overflow:hidden;animation:fu .4s .8s both;}
-.ld-fill{height:100%;width:0;background:var(--teal);animation:bf 1.4s .9s cubic-bezier(.4,0,.2,1) forwards;}
+.ld-icon{animation:pulse-icon 2s ease-in-out infinite;}
+@keyframes pulse-icon{0%,100%{opacity:.7;}50%{opacity:1;}}
+.ld-logo{font-family:'Cinzel',serif;font-size:32px;letter-spacing:.35em;animation:fu .7s .3s both;}
+.ld-sub{font-family:'Cormorant Garamond',serif;font-size:13px;letter-spacing:.22em;color:var(--teal);font-style:italic;animation:fu .7s .55s both;}
+.ld-bar{width:160px;height:1px;background:rgba(92,191,176,.12);overflow:hidden;animation:fu .4s .8s both;border-radius:1px;}
+.ld-fill{height:100%;width:0;background:linear-gradient(90deg,var(--teal-dim),var(--teal));animation:bf 1.6s 1s cubic-bezier(.4,0,.2,1) forwards;}
 @keyframes bf{to{width:100%;}}
-@keyframes fu{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+@keyframes fu{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
 
 /* HEADER */
 header{
   position:fixed;top:0;left:0;right:0;z-index:100;height:68px;
-  background:linear-gradient(180deg,rgba(13,17,23,.98) 0%,rgba(13,17,23,.82) 100%);
-  backdrop-filter:blur(16px);border-bottom:1px solid var(--border);
-  display:flex;align-items:center;justify-content:space-between;padding:0 36px;
+  background:linear-gradient(180deg,rgba(8,13,18,.98) 0%,rgba(8,13,18,.7) 100%);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;padding:0 40px;
 }
 .lw{display:flex;align-items:center;gap:16px;}
-.lt{font-family:'Cinzel',serif;font-size:21px;font-weight:600;letter-spacing:.28em;}
+.lt{font-family:'Cinzel',serif;font-size:22px;font-weight:600;letter-spacing:.28em;}
 .ls{font-family:'Cormorant Garamond',serif;font-size:11px;letter-spacing:.2em;color:var(--teal);font-style:italic;display:block;margin-top:2px;}
-nav{display:flex;align-items:center;gap:28px;}
+nav{display:flex;align-items:center;gap:30px;}
 .nl{font-family:'Cormorant Garamond',serif;font-size:14px;letter-spacing:.1em;color:var(--txt2);cursor:pointer;transition:color .2s;text-decoration:none;}
 .nl:hover{color:var(--teal);}
-.nc{border:1px solid var(--teal-dim);color:var(--teal);padding:7px 18px;font-family:'Cinzel',serif;font-size:10px;letter-spacing:.15em;transition:all .25s;cursor:pointer;text-decoration:none;}
+.nc{border:1px solid var(--teal-dim);color:var(--teal);padding:7px 20px;font-family:'Cinzel',serif;font-size:10px;letter-spacing:.15em;transition:all .25s;cursor:pointer;text-decoration:none;}
 .nc:hover{background:var(--teal-glow);border-color:var(--teal);}
 
-/* LAYOUT */
-main{display:flex;height:100vh;padding-top:68px;}
+/* GLOBE CANVAS */
+#globe-wrap{
+  position:fixed;inset:0;top:68px;
+  display:flex;align-items:center;justify-content:center;
+  overflow:hidden;
+}
+#globe-canvas{
+  display:block;
+  cursor:grab;
+}
+#globe-canvas:active{cursor:grabbing;}
 
-/* MAP */
-#mw{flex:1;position:relative;overflow:hidden;background:radial-gradient(ellipse 120% 100% at 50% 30%,#0e1f30 0%,#07111a 100%);}
-#ms{width:100%;height:100%;cursor:grab;}
-#ms:active{cursor:grabbing;}
-.sphere{fill:#060f18;}
-.grat{fill:none;stroke:rgba(255,255,255,.025);stroke-width:.5;}
-.c{fill:#1a2a38;stroke:#222f3e;stroke-width:.4;cursor:pointer;transition:fill .18s;}
-.c:hover{fill:#243a50;}
-.c.hc{fill:#1c3245;}
-.c.hc:hover{fill:#274a65;}
-.c.active{fill:#1a3530!important;stroke:var(--teal-dim);stroke-width:1;}
-#tip{position:absolute;pointer-events:none;background:rgba(10,16,24,.95);border:1px solid var(--border);padding:7px 14px;font-family:'Cormorant Garamond',serif;font-size:14px;letter-spacing:.04em;opacity:0;transition:opacity .12s;white-space:nowrap;}
-.mctrl{position:absolute;bottom:28px;left:28px;display:flex;flex-direction:column;gap:2px;}
-.cb{width:32px;height:32px;background:rgba(10,16,24,.92);border:1px solid var(--border);color:var(--txt2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:17px;transition:all .2s;font-family:monospace;}
-.cb:hover{color:var(--teal);border-color:var(--teal-dim);}
-.mhint{position:absolute;bottom:28px;right:24px;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:12px;color:var(--muted);letter-spacing:.06em;}
-.bgtitle{position:absolute;bottom:50px;left:50%;transform:translateX(-50%);font-family:'Cinzel',serif;font-size:56px;letter-spacing:.35em;color:rgba(232,228,220,.04);pointer-events:none;white-space:nowrap;user-select:none;}
+/* Ambient glow behind globe */
+.globe-glow{
+  position:absolute;
+  width:600px;height:600px;
+  background:radial-gradient(circle,rgba(92,191,176,.06) 0%,transparent 70%);
+  pointer-events:none;border-radius:50%;
+}
+
+/* Tooltip */
+#tip{
+  position:fixed;
+  background:rgba(8,13,18,.95);
+  border:1px solid var(--border);
+  padding:8px 16px;
+  font-family:'Cormorant Garamond',serif;
+  font-size:14px;letter-spacing:.04em;
+  opacity:0;transition:opacity .15s;
+  pointer-events:none;white-space:nowrap;
+  z-index:200;
+}
 
 /* PANEL */
-#panel{width:0;overflow:hidden;transition:width .38s cubic-bezier(.4,0,.2,1);background:var(--bg-panel);border-left:1px solid var(--border);display:flex;flex-direction:column;position:relative;}
+#panel{
+  position:fixed;right:0;top:68px;bottom:0;
+  width:0;overflow:hidden;
+  transition:width .4s cubic-bezier(.4,0,.2,1);
+  background:var(--panel-bg);
+  border-left:1px solid var(--border);
+  z-index:150;
+  backdrop-filter:blur(20px);
+}
 #panel.open{width:400px;}
 .pi{width:400px;height:100%;display:flex;flex-direction:column;}
-.ph{padding:26px 26px 18px;border-bottom:1px solid var(--border);flex-shrink:0;}
+
+.ph{padding:28px 28px 18px;border-bottom:1px solid var(--border);flex-shrink:0;}
 .pr{font-family:'Cormorant Garamond',serif;font-size:10px;letter-spacing:.22em;color:var(--teal);text-transform:uppercase;margin-bottom:5px;}
-.pn{font-family:'Cinzel',serif;font-size:19px;letter-spacing:.1em;font-weight:400;margin-bottom:10px;}
+.pn{font-family:'Cinzel',serif;font-size:20px;letter-spacing:.1em;font-weight:400;margin-bottom:10px;}
 .pm{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
 .tag{font-size:9px;letter-spacing:.14em;padding:3px 9px;border:1px solid rgba(92,191,176,.28);color:var(--teal-dim);font-family:'Cormorant Garamond',serif;}
 .pc{font-family:'Cormorant Garamond',serif;font-size:12px;color:var(--muted);font-style:italic;}
-.pf{padding:12px 26px;display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--border);flex-shrink:0;}
-.fb{font-size:9px;letter-spacing:.12em;padding:4px 11px;background:transparent;border:1px solid var(--muted);color:var(--muted);cursor:pointer;font-family:'Cormorant Garamond',serif;transition:all .2s;}
+
+.pf{padding:12px 28px;display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--border);flex-shrink:0;}
+.fb{font-size:9px;letter-spacing:.12em;padding:4px 12px;background:transparent;border:1px solid var(--muted);color:var(--muted);cursor:pointer;font-family:'Cormorant Garamond',serif;transition:all .2s;}
 .fb:hover,.fb.on{border-color:var(--teal-dim);color:var(--teal);}
+
 .pl{flex:1;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--teal-dim) transparent;}
 .pl::-webkit-scrollbar{width:3px;}
 .pl::-webkit-scrollbar-thumb{background:var(--teal-dim);}
-.ai{padding:18px 26px;border-bottom:1px solid rgba(92,191,176,.06);cursor:pointer;transition:background .18s;position:relative;}
+
+.ai{padding:20px 28px;border-bottom:1px solid rgba(92,191,176,.06);cursor:pointer;transition:background .18s;position:relative;}
 .ai::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:transparent;transition:background .2s;}
-.ai:hover{background:rgba(92,191,176,.03);}
+.ai:hover{background:rgba(92,191,176,.04);}
 .ai:hover::before{background:var(--teal-dim);}
-.at{font-size:9px;letter-spacing:.18em;text-transform:uppercase;margin-bottom:5px;font-family:'Inter',sans-serif;}
+.at{font-size:9px;letter-spacing:.18em;text-transform:uppercase;margin-bottom:6px;font-family:'Inter',sans-serif;}
 .at.thread{color:#5b9bd5;}.at.analyse{color:var(--teal);}.at.macro{color:var(--gold);}.at.note{color:#a07cc5;}
-.ati{font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--txt);line-height:1.45;margin-bottom:7px;font-weight:400;}
+.ati{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--txt);line-height:1.45;margin-bottom:8px;font-weight:400;}
 .ae{font-family:'Cormorant Garamond',serif;font-size:12px;font-style:italic;color:var(--txt2);line-height:1.6;margin-bottom:10px;}
 .af{display:flex;justify-content:space-between;align-items:center;}
 .ad{font-size:10px;color:var(--muted);letter-spacing:.06em;font-family:'Cormorant Garamond',serif;}
 .al{font-size:10px;letter-spacing:.12em;color:var(--teal-dim);text-decoration:none;border-bottom:1px solid rgba(92,191,176,.3);padding-bottom:1px;transition:color .2s;font-family:'Cormorant Garamond',serif;}
 .al:hover{color:var(--teal);}
-.pe{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;text-align:center;}
+
+.pe{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;text-align:center;gap:16px;}
 .pe p{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:14px;color:var(--muted);line-height:1.7;max-width:260px;}
-.bclose{position:absolute;top:76px;right:12px;width:26px;height:26px;background:none;border:1px solid var(--border);color:var(--muted);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:all .2s;z-index:10;}
+
+.bclose{
+  position:absolute;top:80px;right:14px;
+  width:28px;height:28px;background:none;
+  border:1px solid var(--border);color:var(--muted);
+  cursor:pointer;font-size:12px;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .2s;z-index:10;
+}
 .bclose:hover{color:var(--teal);border-color:var(--teal-dim);}
+
+/* Bottom hint */
+.hint{
+  position:fixed;bottom:28px;left:50%;transform:translateX(-50%);
+  font-family:'Cormorant Garamond',serif;font-style:italic;font-size:12px;
+  color:var(--muted);letter-spacing:.08em;pointer-events:none;
+  transition:opacity .3s;
+}
+
+/* Stars background */
+#stars{position:fixed;inset:0;pointer-events:none;z-index:0;}
 </style>
 </head>
 <body>
 
+<!-- Stars canvas -->
+<canvas id="stars"></canvas>
+
+<!-- Loading -->
 <div id="loading">
-  <svg width="56" height="48" viewBox="0 0 56 48" fill="none">
-    <line x1="8" y1="38" x2="28" y2="10" stroke="#5cbfb0" stroke-width="1.2"/>
-    <line x1="28" y1="10" x2="48" y2="18" stroke="#5cbfb0" stroke-width="1.2"/>
-    <line x1="48" y1="18" x2="42" y2="38" stroke="#5cbfb0" stroke-width="1.2"/>
-    <line x1="8" y1="38" x2="42" y2="38" stroke="#5cbfb0" stroke-width="1.2"/>
-    <line x1="28" y1="10" x2="42" y2="38" stroke="rgba(92,191,176,.45)" stroke-width="1"/>
-    <line x1="8" y1="38" x2="48" y2="18" stroke="rgba(92,191,176,.45)" stroke-width="1"/>
-    <circle cx="8" cy="38" r="3.5" fill="#7a8a9a"/>
-    <circle cx="28" cy="10" r="4" fill="#5cbfb0"/>
-    <circle cx="48" cy="18" r="3.5" fill="#7a8a9a"/>
-    <circle cx="42" cy="38" r="4" fill="#5cbfb0"/>
+  <svg width="60" height="50" viewBox="0 0 60 50" fill="none" class="ld-icon">
+    <line x1="8" y1="40" x2="30" y2="10" stroke="#5cbfb0" stroke-width="1.3"/>
+    <line x1="30" y1="10" x2="52" y2="18" stroke="#5cbfb0" stroke-width="1.3"/>
+    <line x1="52" y1="18" x2="46" y2="40" stroke="#5cbfb0" stroke-width="1.3"/>
+    <line x1="8" y1="40" x2="46" y2="40" stroke="#5cbfb0" stroke-width="1.3"/>
+    <line x1="30" y1="10" x2="46" y2="40" stroke="rgba(92,191,176,.4)" stroke-width="1"/>
+    <line x1="8" y1="40" x2="52" y2="18" stroke="rgba(92,191,176,.4)" stroke-width="1"/>
+    <circle cx="8" cy="40" r="3.5" fill="#6a7a8a"/>
+    <circle cx="30" cy="10" r="4.5" fill="#5cbfb0"/>
+    <circle cx="52" cy="18" r="3.5" fill="#6a7a8a"/>
+    <circle cx="46" cy="40" r="4.5" fill="#5cbfb0"/>
   </svg>
   <div class="ld-logo">HOLON</div>
-  <div class="ld-sub">— Géoéconomie —</div>
+  <div class="ld-sub">— Géoéconomie Mondiale —</div>
   <div class="ld-bar"><div class="ld-fill"></div></div>
 </div>
 
+<!-- Header -->
 <header>
   <div class="lw">
-    <svg width="42" height="36" viewBox="0 0 56 48" fill="none">
-      <line x1="8" y1="38" x2="28" y2="10" stroke="#5cbfb0" stroke-width="1.3"/>
-      <line x1="28" y1="10" x2="48" y2="18" stroke="#5cbfb0" stroke-width="1.3"/>
-      <line x1="48" y1="18" x2="42" y2="38" stroke="#5cbfb0" stroke-width="1.3"/>
-      <line x1="8" y1="38" x2="42" y2="38" stroke="#5cbfb0" stroke-width="1.3"/>
-      <line x1="28" y1="10" x2="42" y2="38" stroke="rgba(92,191,176,.4)" stroke-width="1"/>
-      <line x1="8" y1="38" x2="48" y2="18" stroke="rgba(92,191,176,.4)" stroke-width="1"/>
-      <circle cx="8" cy="38" r="3.5" fill="#7a8a9a"/>
-      <circle cx="28" cy="10" r="4" fill="#5cbfb0"/>
-      <circle cx="48" cy="18" r="3.5" fill="#7a8a9a"/>
-      <circle cx="42" cy="38" r="4" fill="#5cbfb0"/>
+    <svg width="44" height="37" viewBox="0 0 60 50" fill="none">
+      <line x1="8" y1="40" x2="30" y2="10" stroke="#5cbfb0" stroke-width="1.3"/>
+      <line x1="30" y1="10" x2="52" y2="18" stroke="#5cbfb0" stroke-width="1.3"/>
+      <line x1="52" y1="18" x2="46" y2="40" stroke="#5cbfb0" stroke-width="1.3"/>
+      <line x1="8" y1="40" x2="46" y2="40" stroke="#5cbfb0" stroke-width="1.3"/>
+      <line x1="30" y1="10" x2="46" y2="40" stroke="rgba(92,191,176,.4)" stroke-width="1"/>
+      <line x1="8" y1="40" x2="52" y2="18" stroke="rgba(92,191,176,.4)" stroke-width="1"/>
+      <circle cx="8" cy="40" r="3.5" fill="#6a7a8a"/>
+      <circle cx="30" cy="10" r="4.5" fill="#5cbfb0"/>
+      <circle cx="52" cy="18" r="3.5" fill="#6a7a8a"/>
+      <circle cx="46" cy="40" r="4.5" fill="#5cbfb0"/>
     </svg>
     <div><div class="lt">HOLON</div><span class="ls">— Géoéconomie —</span></div>
   </div>
@@ -152,39 +204,37 @@ main{display:flex;height:100vh;padding-top:68px;}
   </nav>
 </header>
 
-<main>
-  <div id="mw">
-    <svg id="ms"></svg>
-    <div id="tip"></div>
-    <div class="bgtitle">HOLON</div>
-    <div class="mctrl">
-      <button class="cb" id="zi">+</button>
-      <button class="cb" id="zo">−</button>
-      <button class="cb" id="zr" style="font-size:13px">⊙</button>
+<!-- Globe -->
+<div id="globe-wrap">
+  <div class="globe-glow"></div>
+  <canvas id="globe-canvas"></canvas>
+</div>
+
+<div id="tip"></div>
+<div class="hint" id="hint">Faites tourner le globe · cliquez sur un pays</div>
+
+<!-- Panel -->
+<div id="panel">
+  <div class="pi">
+    <div class="ph">
+      <div class="pr" id="pr">Région</div>
+      <div class="pn" id="pn">—</div>
+      <div class="pm"><div id="ptags"></div><div class="pc" id="pcount"></div></div>
     </div>
-    <div class="mhint">Cliquez sur un pays · scroll pour zoomer</div>
-  </div>
-  <div id="panel">
-    <div class="pi">
-      <div class="ph">
-        <div class="pr" id="pr">Région</div>
-        <div class="pn" id="pn">—</div>
-        <div class="pm"><div id="ptags"></div><div class="pc" id="pcount"></div></div>
-      </div>
-      <div class="pf">
-        <button class="fb on" data-f="all">Tout</button>
-        <button class="fb" data-f="analyse">Analyse</button>
-        <button class="fb" data-f="thread">Thread</button>
-        <button class="fb" data-f="macro">Macro</button>
-        <button class="fb" data-f="note">Note</button>
-      </div>
-      <div class="pl" id="pl"></div>
+    <div class="pf">
+      <button class="fb on" data-f="all">Tout</button>
+      <button class="fb" data-f="analyse">Analyse</button>
+      <button class="fb" data-f="thread">Thread</button>
+      <button class="fb" data-f="macro">Macro</button>
+      <button class="fb" data-f="note">Note</button>
     </div>
-    <button class="bclose" id="pcl">✕</button>
+    <div class="pl" id="pl"></div>
   </div>
-</main>
+  <button class="bclose" id="pcl">✕</button>
+</div>
 
 <script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
 const DATA = {
   "United States of America":{region:"Amérique du Nord",tags:["Macro","Dollar"],articles:[
     {type:"macro",title:"La fin du dollar roi ? Dédollarisation et recomposition du système monétaire",excerpt:"Les BRICS accélèrent leur stratégie de contournement du dollar. Analyse des mécanismes structurels.",date:"28 fév. 2025",url:"#"},
@@ -240,91 +290,56 @@ const DATA = {
 
 const N2N={4:"Afghanistan",8:"Albania",12:"Algeria",24:"Angola",32:"Argentina",36:"Australia",40:"Austria",50:"Bangladesh",56:"Belgium",68:"Bolivia",76:"Brazil",100:"Bulgaria",104:"Myanmar",116:"Cambodia",120:"Cameroon",124:"Canada",152:"Chile",156:"China",170:"Colombia",178:"Republic of Congo",180:"Dem. Rep. Congo",188:"Costa Rica",192:"Cuba",203:"Czech Republic",208:"Denmark",218:"Ecuador",818:"Egypt",231:"Ethiopia",246:"Finland",250:"France",276:"Germany",288:"Ghana",300:"Greece",356:"India",360:"Indonesia",364:"Iran",368:"Iraq",372:"Ireland",376:"Israel",380:"Italy",392:"Japan",398:"Kazakhstan",404:"Kenya",410:"South Korea",408:"North Korea",414:"Kuwait",418:"Laos",422:"Lebanon",434:"Libya",484:"Mexico",504:"Morocco",528:"Netherlands",554:"New Zealand",566:"Nigeria",578:"Norway",586:"Pakistan",604:"Peru",608:"Philippines",616:"Poland",620:"Portugal",642:"Romania",643:"Russia",682:"Saudi Arabia",686:"Senegal",710:"South Africa",724:"Spain",752:"Sweden",756:"Switzerland",760:"Syria",764:"Thailand",792:"Turkey",804:"Ukraine",784:"United Arab Emirates",826:"United Kingdom",840:"United States of America",858:"Uruguay",860:"Uzbekistan",862:"Venezuela",704:"Vietnam",887:"Yemen",716:"Zimbabwe",728:"South Sudan",894:"Zambia",800:"Uganda"};
 
-const mw=document.getElementById("mw");
-const svg=d3.select("#ms");
-const tip=document.getElementById("tip");
-let W=mw.clientWidth,H=mw.clientHeight;
-svg.attr("width",W).attr("height",H);
+// ── STARS ─────────────────────────────────────────────────────────────────────
+(function initStars(){
+  const c=document.getElementById("stars");
+  const ctx=c.getContext("2d");
+  c.width=window.innerWidth;c.height=window.innerHeight;
+  for(let i=0;i<200;i++){
+    const x=Math.random()*c.width,y=Math.random()*c.height;
+    const r=Math.random()*0.8+0.1;
+    const a=Math.random()*0.5+0.1;
+    ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);
+    ctx.fillStyle=`rgba(200,220,240,${a})`;ctx.fill();
+  }
+})();
 
-const proj=d3.geoNaturalEarth1().scale(W/6.4).translate([W/2,H/2]);
-const pg=d3.geoPath().projection(proj);
-const zoom=d3.zoom().scaleExtent([1,8]).on("zoom",e=>g.attr("transform",e.transform));
-svg.call(zoom);
-const g=svg.append("g");
-g.append("path").datum({type:"Sphere"}).attr("class","sphere").attr("d",pg);
-const grat=d3.geoGraticule().step([30,30]);
-g.append("path").datum(grat()).attr("class","grat").attr("d",pg);
+// ── GLOBE ─────────────────────────────────────────────────────────────────────
+const wrap = document.getElementById("globe-wrap");
+const canvas = document.getElementById("globe-canvas");
+const ctx = canvas.getContext("2d");
+const tip = document.getElementById("tip");
 
-fetch("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json")
-.then(r=>r.json())
-.then(world=>{
-  const features=topojson.feature(world,world.objects.countries).features;
-  g.selectAll(".c")
-    .data(features).join("path")
-    .attr("class",d=>{const n=N2N[+d.id];return"c"+(n&&DATA[n]?" hc":"");})
-    .attr("d",pg)
-    .on("mousemove",function(event,d){
-      const n=N2N[+d.id];if(!n)return;
-      const has=DATA[n];
-      const r=mw.getBoundingClientRect();
-      tip.style.left=(event.clientX-r.left+14)+"px";
-      tip.style.top=(event.clientY-r.top-10)+"px";
-      tip.style.opacity="1";
-      tip.innerHTML=`<strong style="color:${has?"#5cbfb0":"#8fa0b0"}">${n}</strong>${has?` <span style="color:#4a5a6a;font-size:11px">— ${has.articles.length} analyse${has.articles.length>1?"s":""}</span>`:""}`;
-    })
-    .on("mouseleave",()=>tip.style.opacity="0")
-    .on("click",function(event,d){
-      const n=N2N[+d.id];
-      d3.selectAll(".c").classed("active",false);
-      d3.select(this).classed("active",true);
-      openPanel(n);
-    });
-  setTimeout(()=>{const ld=document.getElementById("loading");ld.style.opacity="0";setTimeout(()=>ld.style.display="none",500);},2000);
-});
+let W, H, R, cx, cy;
+function resize(){
+  W = wrap.clientWidth; H = wrap.clientHeight;
+  canvas.width = W; canvas.height = H;
+  cx = W/2; cy = H/2;
+  R = Math.min(W, H) * 0.42;
+}
+resize();
+window.addEventListener("resize", ()=>{ resize(); draw(); });
 
-let curF="all",curD=null;
+// Projection
+let rotation = [0, -20]; // [lambda, phi]
+let targetRot = [0, -20];
+let autoRotate = true;
+let autoSpeed = 0.12;
 
-function openPanel(name){
-  const d=name&&DATA[name];curD=d||null;
-  document.getElementById("pn").textContent=name||"—";
-  document.getElementById("pr").textContent=d?d.region:"—";
-  document.getElementById("pcount").textContent=d?`${d.articles.length} analyse${d.articles.length>1?"s":""}`:"";
-  const te=document.getElementById("ptags");
-  te.innerHTML=d?d.tags.map(t=>`<span class="tag">${t}</span>`).join(""):"";
-  renderList();
-  document.getElementById("panel").classList.add("open");
+function proj(lon, lat) {
+  // Orthographic projection
+  const lam = (lon + rotation[0]) * Math.PI / 180;
+  const phi = lat * Math.PI / 180;
+  const phi1 = rotation[1] * Math.PI / 180;
+
+  const cosC = Math.sin(phi1)*Math.sin(phi) + Math.cos(phi1)*Math.cos(phi)*Math.cos(lam);
+  if(cosC < 0) return null; // behind globe
+
+  const x = R * Math.cos(phi) * Math.sin(lam);
+  const y = R * (Math.cos(phi1)*Math.sin(phi) - Math.sin(phi1)*Math.cos(phi)*Math.cos(lam));
+  return [cx + x, cy - y];
 }
 
-function renderList(){
-  const el=document.getElementById("pl");
-  if(!curD){el.innerHTML=`<div class="pe"><p>Aucune analyse disponible pour cette zone géographique.</p></div>`;return;}
-  const items=curF==="all"?curD.articles:curD.articles.filter(a=>a.type===curF);
-  if(!items.length){el.innerHTML=`<div class="pe"><p>Aucune analyse de ce type pour cette région.</p></div>`;return;}
-  el.innerHTML=items.map(a=>`<div class="ai"><div class="at ${a.type}">${a.type.toUpperCase()}</div><div class="ati">${a.title}</div><div class="ae">${a.excerpt}</div><div class="af"><span class="ad">${a.date}</span><a href="${a.url}" class="al">Lire →</a></div></div>`).join("");
-}
-
-document.querySelectorAll(".fb").forEach(b=>{
-  b.addEventListener("click",()=>{
-    document.querySelectorAll(".fb").forEach(x=>x.classList.remove("on"));
-    b.classList.add("on");curF=b.dataset.f;renderList();
-  });
-});
-
-document.getElementById("pcl").addEventListener("click",()=>{
-  document.getElementById("panel").classList.remove("open");
-  d3.selectAll(".c").classed("active",false);
-});
-
-document.getElementById("zi").addEventListener("click",()=>svg.transition().duration(300).call(zoom.scaleBy,1.6));
-document.getElementById("zo").addEventListener("click",()=>svg.transition().duration(300).call(zoom.scaleBy,0.625));
-document.getElementById("zr").addEventListener("click",()=>svg.transition().duration(400).call(zoom.transform,d3.zoomIdentity));
-
-window.addEventListener("resize",()=>{
-  W=mw.clientWidth;H=mw.clientHeight;
-  svg.attr("width",W).attr("height",H);
-  proj.scale(W/6.4).translate([W/2,H/2]);
-  g.selectAll("path").attr("d",pg);
-});
-</script>
-</body>
-</html>
+function isVisible(lon, lat){
+  const lam = (lon + rotation[0]) * Math.PI / 180;
+  const phi = lat * Math
