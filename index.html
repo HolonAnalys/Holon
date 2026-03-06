@@ -430,7 +430,21 @@ window.addEventListener('resize',()=>{
 
 // ── ADMIN ──────────────────────────────────────────────
 let admSelCountry = null;
-let admEditIdx = null; // index article en cours d'édition
+let admEditIdx = null;
+let admUnlocked = false;
+
+// Séquence secrète : taper "holon" au clavier
+let admSeq = '';
+document.addEventListener('keydown', e => {
+  admSeq = (admSeq + e.key).slice(-5);
+  if(admSeq === 'holon'){
+    admUnlocked = true;
+    admSeq = '';
+    document.getElementById('adm-export-btn').style.display = '';
+    document.getElementById('adm-export-note').textContent = 'Modifications actives immédiatement. Exportez pour sauvegarder.';
+    admRenderRight();
+  }
+});
 
 document.getElementById('logo-wrap').addEventListener('dblclick', () => {
   const o = document.getElementById('admin-overlay');
@@ -468,14 +482,14 @@ function admRenderRight(){
     html += `<div class="adm-article" id="adm-art-${i}">
       <div class="adm-article-title">${a.title}</div>
       <div class="adm-article-meta">${a.type.toUpperCase()} · ${a.date}</div>
-      <div class="adm-article-actions">
+      ${admUnlocked ? `<div class="adm-article-actions">
         <button class="adm-btn-sm" onclick="admEditArticle(${i})">Modifier</button>
         <button class="adm-btn-sm del" onclick="admDeleteArticle(${i})">Supprimer</button>
-      </div>
+      </div>` : ''}
     </div>`;
   });
 
-  html += `<button class="adm-add-btn" onclick="admNewArticle()">+ Nouvel article</button>`;
+  html += admUnlocked ? `<button class="adm-add-btn" onclick="admNewArticle()">+ Nouvel article</button>` : '';
 
   if(admEditIdx !== null){
     const a = admEditIdx === 'new' ? {type:'analyse',title:'',excerpt:'',date:'',url:'#'} : articles[admEditIdx];
@@ -573,8 +587,8 @@ document.getElementById('adm-export-btn').addEventListener('click', () => {
       </div>
     </div>
     <div class="adm-export">
-      <span class="adm-export-note">Les modifications sont actives immédiatement. Exportez pour les sauvegarder dans le fichier.</span>
-      <button class="adm-btn" id="adm-export-btn">EXPORTER data.js</button>
+      <span class="adm-export-note" id="adm-export-note">Double-cliquez sur le logo pour consulter le contenu par pays.</span>
+      <button class="adm-btn" id="adm-export-btn" style="display:none">EXPORTER data.js</button>
     </div>
   </div>
 </div>
