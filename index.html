@@ -67,6 +67,10 @@ nav{display:flex;align-items:center;gap:18px;}
 .pe p{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:14px;color:var(--muted);line-height:1.7;max-width:220px;}
 .bclose{position:absolute;top:70px;right:12px;width:26px;height:26px;background:none;border:1px solid var(--border);color:var(--muted);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:all .2s;z-index:10;}
 .bclose:hover{color:var(--teal);border-color:var(--teal-dim);}
+.rzone{cursor:pointer;transition:opacity .2s;}
+.rzone:hover{opacity:1!important;}
+.country.pivot-country{fill:#1c2e3a;stroke:rgba(200,160,80,.2);}
+.country.pivot-country.has-data{fill:#1e3040;}
 #loading{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;z-index:300;transition:opacity .7s;}
 .ld-logo{font-family:'Cinzel',serif;font-size:32px;letter-spacing:.35em;}
 .ld-sub{font-family:'Cormorant Garamond',serif;font-size:13px;letter-spacing:.22em;color:var(--teal);font-style:italic;}
@@ -155,24 +159,67 @@ nav{display:flex;align-items:center;gap:18px;}
 window.onload = function() {
 
 const DATA = {
-  "United States of America":{region:"Amérique du Nord",tags:["Macro","Dollar"],lat:38,lon:-97,articles:[{type:"macro",title:"La fin du dollar roi ? Dédollarisation et recomposition du système monétaire",excerpt:"Les BRICS accélèrent leur stratégie de contournement du dollar.",date:"28 fév. 2025",url:"#"},{type:"analyse",title:"Fed vs inflation : le dilemme impossible de Powell",excerpt:"Entre stabilité des prix et risque de récession, la Fed navigue en territoire inconnu.",date:"14 fév. 2025",url:"#"},{type:"thread",title:"Thread : Les 10 graphiques qui expliquent l'économie américaine en 2025",excerpt:"Les données clés pour comprendre la trajectoire macro US.",date:"3 fév. 2025",url:"#"}]},
+  "United States of America":{region:"Amérique du Nord",tags:["Macro","Dollar","Dédollarisation"],lat:38,lon:-97,articles:[{type:"macro",title:"La fin du dollar roi ? Dédollarisation et recomposition du système monétaire",excerpt:"Les BRICS accélèrent leur stratégie de contournement du dollar.",date:"28 fév. 2025",url:"#"},{type:"analyse",title:"BRICS+ : la monnaie commune, une chimère ?",excerpt:"Divergences d'intérêts entre membres rendent une monnaie commune très improbable à court terme.",date:"15 fév. 2025",url:"#"},{type:"analyse",title:"Fed vs inflation : le dilemme impossible de Powell",excerpt:"Entre stabilité des prix et risque de récession, la Fed navigue en territoire inconnu.",date:"14 fév. 2025",url:"#"},{type:"thread",title:"Thread : Les 10 graphiques qui expliquent l'économie américaine en 2025",excerpt:"Les données clés pour comprendre la trajectoire macro US.",date:"3 fév. 2025",url:"#"}]},
   "China":{region:"Asie-Pacifique",tags:["Géopolitique","Industrie"],lat:35,lon:103,articles:[{type:"analyse",title:"La stratégie économique de Xi : entre relance domestique et expansion extérieure",excerpt:"Comment Pékin articule sa politique industrielle avec ses ambitions géopolitiques.",date:"22 fév. 2025",url:"#"},{type:"thread",title:"Thread : Belt & Road Initiative — bilan d'une décennie",excerpt:"Qui a vraiment profité des nouvelles routes de la soie ?",date:"10 jan. 2025",url:"#"},{type:"macro",title:"Déflation chinoise : le Japon des années 90 comme miroir",excerpt:"Les parallèles troublants entre la stagnation japonaise et la Chine.",date:"5 jan. 2025",url:"#"},{type:"note",title:"Yuan digital et surveillance financière",excerpt:"Les implications géopolitiques du e-CNY.",date:"18 déc. 2024",url:"#"}]},
   "Russia":{region:"Eurasie",tags:["Sanctions","Énergie"],lat:61,lon:90,articles:[{type:"analyse",title:"L'économie de guerre russe : résilience ou illusion ?",excerpt:"Malgré les sanctions, la Russie affiche une croissance.",date:"25 fév. 2025",url:"#"},{type:"macro",title:"Pétrole russe : les routes de contournement des sanctions",excerpt:"Inde, Chine, Turquie — comment le brut russe continue de circuler.",date:"12 fév. 2025",url:"#"}]},
-  "Saudi Arabia":{region:"Moyen-Orient",tags:["Pétrole","Vision 2030"],lat:24,lon:45,articles:[{type:"analyse",title:"Vision 2030 : l'Arabie Saoudite peut-elle vraiment se diversifier ?",excerpt:"MBS parie sur une transformation économique radicale.",date:"19 fév. 2025",url:"#"},{type:"thread",title:"Thread : L'OPEP+ est-il encore pertinent en 2025 ?",excerpt:"La cohésion du cartel mise à l'épreuve.",date:"8 jan. 2025",url:"#"}]},
+  "Saudi Arabia":{region:"Moyen-Orient",tags:["Pétrole","Vision 2030","Puissance moyenne"],lat:24,lon:45,articles:[{type:"analyse",title:"Vision 2030 : l'Arabie Saoudite peut-elle vraiment se diversifier ?",excerpt:"MBS parie sur une transformation économique radicale.",date:"19 fév. 2025",url:"#"},{type:"thread",title:"Thread : L'OPEP+ est-il encore pertinent en 2025 ?",excerpt:"La cohésion du cartel mise à l'épreuve.",date:"8 jan. 2025",url:"#"},{type:"analyse",title:"L'âge d'or des puissances moyennes",excerpt:"Turquie, Inde, Émirats, Arabie Saoudite : dans un monde multipolaire, les pivots deviennent des faiseurs de roi.",date:"22 fév. 2025",url:"#"}]},
   "Germany":{region:"Europe",tags:["Industrie","Énergie"],lat:51,lon:10,articles:[{type:"analyse",title:"Le modèle allemand en crise : la fin du Wirtschaftswunder ?",excerpt:"Désindustrialisation, crise énergétique et vieillissement démographique.",date:"20 fév. 2025",url:"#"},{type:"macro",title:"L'Europe face au choc tarifaire américain",excerpt:"Comment l'UE adapte sa stratégie commerciale.",date:"1 mars 2025",url:"#"}]},
   "France":{region:"Europe",tags:["Déficit","Souveraineté"],lat:46,lon:2,articles:[{type:"analyse",title:"La France en décrochage budgétaire : anatomie d'une crise annoncée",excerpt:"Avec un déficit à 6% du PIB, Paris dans le collimateur des marchés.",date:"2 mars 2025",url:"#"}]},
   "Brazil":{region:"Amérique du Sud",tags:["BRICS","Émergents"],lat:-10,lon:-53,articles:[{type:"analyse",title:"Lula III : ambitions sociales vs contraintes budgétaires",excerpt:"Le retour de Lula confronté à une dette publique croissante.",date:"15 fév. 2025",url:"#"},{type:"thread",title:"Thread : Le Brésil, pivot des BRICS en Amérique Latine",excerpt:"Comment Brasília joue sur plusieurs tableaux.",date:"20 jan. 2025",url:"#"}]},
-  "India":{region:"Asie du Sud",tags:["Croissance","Géopolitique"],lat:20,lon:78,articles:[{type:"analyse",title:"L'Inde, nouveau centre de gravité économique mondial ?",excerpt:"1,4 milliard d'habitants et une croissance à 7%.",date:"24 fév. 2025",url:"#"},{type:"macro",title:"Roupie et souveraineté monétaire : la stratégie de Modi",excerpt:"L'Inde développe ses propres infrastructures de paiement.",date:"11 jan. 2025",url:"#"}]},
-  "Turkey":{region:"Eurasie",tags:["Pivot","Inflation"],lat:38,lon:35,articles:[{type:"note",title:"La Turquie, pivot entre Orient et Occident — à quel prix ?",excerpt:"Erdogan navigue entre l'OTAN et les BRICS.",date:"6 fév. 2025",url:"#"}]},
+  "India":{region:"Asie du Sud",tags:["Croissance","Géopolitique","Puissance moyenne"],lat:20,lon:78,articles:[{type:"analyse",title:"L'Inde, nouveau centre de gravité économique mondial ?",excerpt:"1,4 milliard d'habitants et une croissance à 7%.",date:"24 fév. 2025",url:"#"},{type:"macro",title:"Roupie et souveraineté monétaire : la stratégie de Modi",excerpt:"L'Inde développe ses propres infrastructures de paiement.",date:"11 jan. 2025",url:"#"},{type:"thread",title:"Thread : Pourquoi les puissances moyennes gagnent dans un monde fragmenté",excerpt:"Friend-shoring, multipolarité : comment l'Inde joue sur plusieurs tableaux sans choisir de camp.",date:"3 fév. 2025",url:"#"}]},
+  "Turkey":{region:"Eurasie",tags:["Pivot","Inflation","Puissance moyenne"],lat:38,lon:35,articles:[{type:"note",title:"La Turquie, pivot entre Orient et Occident — à quel prix ?",excerpt:"Erdogan navigue entre l'OTAN et les BRICS.",date:"6 fév. 2025",url:"#"},{type:"analyse",title:"L'âge d'or des puissances moyennes",excerpt:"Turquie, Inde, Émirats, Arabie Saoudite : dans un monde multipolaire, les pivots deviennent des faiseurs de roi.",date:"22 fév. 2025",url:"#"}]},
   "Japan":{region:"Asie-Pacifique",tags:["Yen","Politique monétaire"],lat:36,lon:138,articles:[{type:"macro",title:"La BOJ sort de sa décennie de taux négatifs",excerpt:"Le pivot de la Banque du Japon envoie des ondes de choc.",date:"17 fév. 2025",url:"#"},{type:"analyse",title:"Le carry trade yen : la bombe à retardement des marchés",excerpt:"Des milliers de milliards empruntés en yen.",date:"28 jan. 2025",url:"#"}]},
   "South Africa":{region:"Afrique",tags:["BRICS","Émergents"],lat:-29,lon:25,articles:[{type:"analyse",title:"L'Afrique du Sud et les BRICS élargi : entre espoirs et désillusions",excerpt:"Les enjeux pour le continent africain.",date:"9 fév. 2025",url:"#"}]},
   "Iran":{region:"Moyen-Orient",tags:["Sanctions","Nucléaire"],lat:32,lon:53,articles:[{type:"analyse",title:"L'Iran dans l'axe Moscou-Pékin : une alliance de nécessité",excerpt:"Comment Téhéran s'intègre dans le nouvel ordre alternatif.",date:"7 fév. 2025",url:"#"}]},
   "Nigeria":{region:"Afrique",tags:["Pétrole","Démographie"],lat:9,lon:8,articles:[{type:"thread",title:"Thread : Le Nigeria en 2025 — la puissance africaine à la croisée des chemins",excerpt:"Démographie explosive, ressources pétrolières, instabilité politique.",date:"13 jan. 2025",url:"#"}]},
-  "Dédollarisation":{region:"Thème mondial",tags:["Dollar","BRICS","Monétaire"],lat:15,lon:-30,articles:[{type:"macro",title:"Dédollarisation : érosion lente, pas effondrement",excerpt:"Le dollar reste dominant mais son emprise se fissure. Les BRICS cherchent des alternatives sans consensus clair.",date:"1 mars 2025",url:"#"},{type:"analyse",title:"BRICS+ : la monnaie commune, une chimère ?",excerpt:"Divergences d'intérêts entre membres rendent une monnaie commune très improbable à court terme.",date:"15 fév. 2025",url:"#"},{type:"thread",title:"Thread : Pourquoi le dollar survivra — et pourquoi il s'affaiblit quand même",excerpt:"Pas de remplacement crédible, mais une multipolarité monétaire qui s'installe progressivement.",date:"3 jan. 2025",url:"#"}]},
-  "Terres rares":{region:"Ressources critiques",tags:["Chine","Semi-conducteurs","Tech"],lat:40,lon:60,articles:[{type:"analyse",title:"Terres rares : la Chine contrôle 60% de la production mondiale",excerpt:"Pékin dispose d'un levier géopolitique majeur sur la chaîne d'approvisionnement technologique mondiale.",date:"20 fév. 2025",url:"#"},{type:"macro",title:"La guerre des semi-conducteurs : au-delà de TSMC",excerpt:"L'enjeu dépasse Taiwan — c'est toute la chaîne de valeur des puces qui est en cours de re-territorialisation.",date:"8 fév. 2025",url:"#"},{type:"note",title:"IRA et CHIPS Act : l'Amérique réindustrialise à marche forcée",excerpt:"Washington subventionne massivement pour rapatrier la production de semi-conducteurs.",date:"12 jan. 2025",url:"#"}]},
-  "Hydrocarbures":{region:"Ressources critiques",tags:["Pétrole","GNL","Corridors"],lat:-5,lon:55,articles:[{type:"macro",title:"Corridors énergétiques fragmentés : la nouvelle géographie du pétrole",excerpt:"Après les sanctions, les flux pétroliers se réorganisent autour de nouveaux hubs — Inde, Turquie, Chine.",date:"25 fév. 2025",url:"#"},{type:"analyse",title:"Le GNL américain comme arme géopolitique",excerpt:"Washington utilise ses exportations de gaz naturel liquéfié pour réduire la dépendance européenne au gaz russe.",date:"10 fév. 2025",url:"#"},{type:"thread",title:"Thread : OPEP+ en tension — qui contrôle vraiment le prix du baril ?",excerpt:"Entre ambitions saoudiennes, besoins russes et dissidences internes, le cartel montre ses failles.",date:"5 jan. 2025",url:"#"}]},
-  "Puissances moyennes":{region:"Thème mondial",tags:["Multipolarité","Pivot","Agilité"],lat:25,lon:20,articles:[{type:"analyse",title:"L'âge d'or des puissances moyennes",excerpt:"Turquie, Inde, Émirats, Arabie Saoudite : dans un monde multipolaire, les pivots deviennent des faiseurs de roi.",date:"22 fév. 2025",url:"#"},{type:"thread",title:"Thread : Pourquoi les petits pays gagnent dans un monde fragmenté",excerpt:"Singapour, Qatar, UAE — comment la taille réduite devient un avantage stratégique.",date:"18 jan. 2025",url:"#"},{type:"macro",title:"Friend-shoring : la nouvelle logique des chaînes de valeur",excerpt:"Les entreprises relocalisent non plus pour les coûts, mais pour la sécurité géopolitique.",date:"3 fév. 2025",url:"#"}]}
+  "Nigeria":{region:"Afrique",tags:["Pétrole","Démographie"],lat:9,lon:8,articles:[{type:"thread",title:"Thread : Le Nigeria en 2025 — la puissance africaine à la croisée des chemins",excerpt:"Démographie explosive, ressources pétrolières, instabilité politique.",date:"13 jan. 2025",url:"#"}]}
 };
+
+// Zones ressources : {id, label, type, couleur, polygone approx [lon,lat], articles}
+const RESOURCE_ZONES = [
+  {
+    id:"terres-rares",
+    label:"Terres rares & semi-conducteurs",
+    type:"ressource",
+    color:"rgba(160,100,220,0.13)",
+    stroke:"rgba(160,100,220,0.35)",
+    // Chine du nord + Mongolie intérieure
+    features:[
+      {type:"Feature",geometry:{type:"Polygon",coordinates:[[[95,25],[135,25],[135,50],[95,50],[95,25]]]}},
+      // Australie ouest
+      {type:"Feature",geometry:{type:"Polygon",coordinates:[[[113,-35],[130,-35],[130,-20],[113,-20],[113,-35]]]}},
+      // Congo (cobalt)
+      {type:"Feature",geometry:{type:"Polygon",coordinates:[[[22,-12],[32,-12],[32,-4],[22,-4],[22,-12]]]}}
+    ],
+    articles:[
+      {type:"analyse",title:"Terres rares : la Chine contrôle 60% de la production mondiale",excerpt:"Pékin dispose d'un levier géopolitique majeur sur la chaîne d'approvisionnement technologique.",date:"20 fév. 2025",url:"#"},
+      {type:"macro",title:"La guerre des semi-conducteurs : au-delà de TSMC",excerpt:"L'enjeu dépasse Taiwan — c'est toute la chaîne de valeur des puces qui se re-territorialise.",date:"8 fév. 2025",url:"#"},
+      {type:"note",title:"IRA et CHIPS Act : l'Amérique réindustrialise à marche forcée",excerpt:"Washington subventionne massivement pour rapatrier la production de semi-conducteurs.",date:"12 jan. 2025",url:"#"}
+    ]
+  },
+  {
+    id:"hydrocarbures",
+    label:"Hydrocarbures",
+    type:"ressource",
+    color:"rgba(180,120,60,0.12)",
+    stroke:"rgba(200,140,60,0.32)",
+    features:[
+      // Golfe Persique
+      {type:"Feature",geometry:{type:"Polygon",coordinates:[[[45,20],[60,20],[60,30],[45,30],[45,20]]]}},
+      // Russie occidentale / Sibérie ouest
+      {type:"Feature",geometry:{type:"Polygon",coordinates:[[[55,55],[80,55],[80,70],[55,70],[55,55]]]}},
+      // Venezuela + golfe du Mexique
+      {type:"Feature",geometry:{type:"Polygon",coordinates:[[[-75,5],[-55,5],[-55,15],[-75,15],[-75,5]]]}},
+      // Nigeria / Golfe de Guinée
+      {type:"Feature",geometry:{type:"Polygon",coordinates:[[[3,3],[12,3],[12,10],[3,10],[3,3]]]}}
+    ],
+    articles:[
+      {type:"macro",title:"Corridors énergétiques fragmentés : la nouvelle géographie du pétrole",excerpt:"Après les sanctions, les flux pétroliers se réorganisent autour de nouveaux hubs.",date:"25 fév. 2025",url:"#"},
+      {type:"analyse",title:"Le GNL américain comme arme géopolitique",excerpt:"Washington utilise ses exportations de gaz pour réduire la dépendance européenne au gaz russe.",date:"10 fév. 2025",url:"#"},
+      {type:"thread",title:"Thread : OPEP+ en tension — qui contrôle vraiment le prix du baril ?",excerpt:"Entre ambitions saoudiennes, besoins russes et dissidences internes, le cartel montre ses failles.",date:"5 jan. 2025",url:"#"}
+    ]
+  }
+];
 
 const N2N={4:"Afghanistan",8:"Albania",12:"Algeria",24:"Angola",32:"Argentina",36:"Australia",40:"Austria",50:"Bangladesh",56:"Belgium",64:"Bhutan",68:"Bolivia",76:"Brazil",100:"Bulgaria",104:"Myanmar",116:"Cambodia",120:"Cameroon",124:"Canada",152:"Chile",156:"China",170:"Colombia",178:"Republic of Congo",180:"Dem. Rep. Congo",188:"Costa Rica",192:"Cuba",203:"Czech Republic",208:"Denmark",214:"Dominican Republic",218:"Ecuador",818:"Egypt",222:"El Salvador",231:"Ethiopia",246:"Finland",250:"France",266:"Gabon",276:"Germany",288:"Ghana",300:"Greece",320:"Guatemala",332:"Haiti",340:"Honduras",356:"India",360:"Indonesia",364:"Iran",368:"Iraq",372:"Ireland",376:"Israel",380:"Italy",392:"Japan",400:"Jordan",398:"Kazakhstan",404:"Kenya",410:"South Korea",408:"North Korea",414:"Kuwait",418:"Laos",422:"Lebanon",434:"Libya",484:"Mexico",504:"Morocco",508:"Mozambique",516:"Namibia",528:"Netherlands",554:"New Zealand",566:"Nigeria",578:"Norway",586:"Pakistan",604:"Peru",608:"Philippines",616:"Poland",620:"Portugal",642:"Romania",643:"Russia",682:"Saudi Arabia",686:"Senegal",710:"South Africa",724:"Spain",729:"Sudan",728:"South Sudan",752:"Sweden",756:"Switzerland",760:"Syria",764:"Thailand",792:"Turkey",800:"Uganda",804:"Ukraine",784:"United Arab Emirates",826:"United Kingdom",840:"United States of America",858:"Uruguay",860:"Uzbekistan",862:"Venezuela",704:"Vietnam",887:"Yemen",894:"Zambia",716:"Zimbabwe"};
 
@@ -229,6 +276,41 @@ fetch('https://unpkg.com/world-atlas@2/countries-110m.json')
        .on('click', function(e){ selectCountry(name,null); e.stopPropagation(); });
     });
 
+    // Pays pivots — légère teinte dorée sur les pays "Puissance moyenne"
+    const PIVOTS = ["Turkey","India","Saudi Arabia"];
+    countryG.selectAll('path').each(function(d){
+      const name = N2N[+d.id];
+      if(PIVOTS.includes(name)) d3.select(this).classed('pivot-country', true);
+    });
+
+    // Zones ressources
+    const zonesG = mapG.insert('g', ':first-child').attr('id','zones-g');
+
+    // Defs pour hachures
+    const defs = svg.select('defs').empty() ? svg.append('defs') : svg.select('defs');
+    const hatch = defs.append('pattern').attr('id','hatch-res').attr('patternUnits','userSpaceOnUse').attr('width',6).attr('height',6).attr('patternTransform','rotate(45)');
+    hatch.append('line').attr('x1',0).attr('y1',0).attr('x2',0).attr('y2',6).attr('stroke','rgba(200,140,60,0.18)').attr('stroke-width',1.5);
+
+    const hatch2 = defs.append('pattern').attr('id','hatch-rare').attr('patternUnits','userSpaceOnUse').attr('width',6).attr('height',6).attr('patternTransform','rotate(45)');
+    hatch2.append('line').attr('x1',0).attr('y1',0).attr('x2',0).attr('y2',6).attr('stroke','rgba(160,100,220,0.2)').attr('stroke-width',1.5);
+
+    RESOURCE_ZONES.forEach(zone => {
+      const hatchId = zone.id === 'terres-rares' ? 'hatch-rare' : 'hatch-res';
+      zone.features.forEach(feat => {
+        zonesG.append('path')
+          .datum(feat)
+          .attr('class','rzone')
+          .attr('d', pathGen)
+          .attr('fill', `url(#${hatchId})`)
+          .attr('stroke', zone.stroke)
+          .attr('stroke-width', 0.6)
+          .attr('opacity', 0.85)
+          .on('mousemove', function(e){ showTipZone(e.clientX, e.clientY, zone.label); e.stopPropagation(); })
+          .on('mouseleave', hideTip)
+          .on('click', function(e){ selectZone(zone); e.stopPropagation(); });
+      });
+    });
+
     hideLoading();
   })
   .catch(() => hideLoading());
@@ -241,6 +323,21 @@ function hideLoading(){
   setTimeout(()=>ld.style.display='none', 700);
 }
 
+function showTipZone(mx,my,label){
+  tip.style.opacity='1'; tip.style.left=(mx+14)+'px'; tip.style.top=(my-10)+'px';
+  tip.innerHTML=`<strong style="color:#c87840">${label}</strong>`;
+}
+function selectZone(zone){
+  countryG.selectAll('.country').classed('active',false);
+  curD = {region:"Ressources critiques", tags:[zone.type], articles: zone.articles};
+  document.getElementById('pn').textContent = zone.label;
+  document.getElementById('pr').textContent = "Ressources critiques";
+  document.getElementById('pcount').textContent = `${zone.articles.length} analyses`;
+  document.getElementById('ptags').innerHTML = `<span class="tag" style="border-color:rgba(200,140,60,.4);color:#c87840">${zone.id==='terres-rares'?'Terres rares':'Hydrocarbures'}</span>`;
+  renderList();
+  document.getElementById('panel').classList.add('open');
+  document.getElementById('hint').style.opacity='0';
+}
 function showTip(mx,my,name){
   const d=DATA[name];
   tip.style.opacity='1'; tip.style.left=(mx+14)+'px'; tip.style.top=(my-10)+'px';
