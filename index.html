@@ -428,14 +428,17 @@ window.addEventListener('resize',()=>{
   });
 });
 
-// ── ADMIN ──────────────────────────────────────────────
-let admSelCountry = null;
-let admEditIdx = null;
-let admUnlocked = false;
+}; // fin window.onload
 
-// Séquence secrète : taper "holon" au clavier
-let admSeq = '';
-document.addEventListener('keydown', e => {
+// ══════════════════════════════════════════════════════
+// ADMIN — tout en scope global
+// ══════════════════════════════════════════════════════
+var admSelCountry = null;
+var admEditIdx = null;
+var admUnlocked = false;
+var admSeq = '';
+
+document.addEventListener('keydown', function(e){
   admSeq = (admSeq + e.key).slice(-5);
   if(admSeq === 'holon'){
     admUnlocked = true;
@@ -446,22 +449,32 @@ document.addEventListener('keydown', e => {
   }
 });
 
-document.getElementById('logo-wrap').addEventListener('dblclick', () => {
-  const o = document.getElementById('admin-overlay');
+document.getElementById('logo-wrap').addEventListener('dblclick', function(){
+  var o = document.getElementById('admin-overlay');
   o.classList.toggle('open');
   if(o.classList.contains('open')) admRenderCountryList();
 });
-document.getElementById('adm-close').addEventListener('click', () => {
+
+document.getElementById('adm-close').addEventListener('click', function(){
   document.getElementById('admin-overlay').classList.remove('open');
 });
 
+document.getElementById('adm-export-btn').addEventListener('click', function(){
+  var json = JSON.stringify(DATA, null, 2);
+  var blob = new Blob(['const DATA = ' + json + ';'], {type:'text/javascript'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'data.js';
+  a.click();
+});
+
 function admRenderCountryList(){
-  const el = document.getElementById('adm-country-list');
-  el.innerHTML = Object.keys(DATA).sort().map(name =>
-    `<div class="adm-country-item${name===admSelCountry?' sel':''}" data-name="${name}">${name}</div>`
-  ).join('');
-  el.querySelectorAll('.adm-country-item').forEach(item => {
-    item.addEventListener('click', () => {
+  var el = document.getElementById('adm-country-list');
+  el.innerHTML = Object.keys(DATA).sort().map(function(name){
+    return '<div class="adm-country-item' + (name===admSelCountry?' sel':'') + '" data-name="' + name + '">' + name + '</div>';
+  }).join('');
+  el.querySelectorAll('.adm-country-item').forEach(function(item){
+    item.addEventListener('click', function(){
       admSelCountry = item.dataset.name;
       admEditIdx = null;
       admRenderCountryList();
@@ -471,78 +484,91 @@ function admRenderCountryList(){
 }
 
 function admRenderRight(){
-  const el = document.getElementById('adm-right');
-  if(!admSelCountry){ el.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;font-family:\'Cormorant Garamond\',serif;font-style:italic;color:var(--muted);font-size:14px;">Sélectionnez un pays</div>'; return; }
-  const d = DATA[admSelCountry];
-  const articles = d ? d.articles : [];
+  var el = document.getElementById('adm-right');
+  if(!el) return;
+  if(!admSelCountry){
+    el.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;font-family:\'Cormorant Garamond\',serif;font-style:italic;color:var(--muted);font-size:14px;">Sélectionnez un pays</div>';
+    return;
+  }
+  var d = DATA[admSelCountry];
+  var articles = d ? d.articles : [];
+  var html = '<div class="adm-section-title">' + admSelCountry.toUpperCase() + ' — ' + articles.length + ' article' + (articles.length>1?'s':'') + '</div>';
 
-  let html = `<div class="adm-section-title">${admSelCountry.toUpperCase()} — ${articles.length} article${articles.length>1?'s':''}</div>`;
-
-  articles.forEach((a, i) => {
-    html += `<div class="adm-article" id="adm-art-${i}">
-      <div class="adm-article-title">${a.title}</div>
-      <div class="adm-article-meta">${a.type.toUpperCase()} · ${a.date}</div>
-      ${admUnlocked ? `<div class="adm-article-actions">
-        <button class="adm-btn-sm" onclick="admEditArticle(${i})">Modifier</button>
-        <button class="adm-btn-sm del" onclick="admDeleteArticle(${i})">Supprimer</button>
-      </div>` : ''}
-    </div>`;
+  articles.forEach(function(a, i){
+    html += '<div class="adm-article">'
+      + '<div class="adm-article-title">' + a.title + '</div>'
+      + '<div class="adm-article-meta">' + a.type.toUpperCase() + ' · ' + a.date + '</div>'
+      + (admUnlocked ? '<div class="adm-article-actions">'
+          + '<button class="adm-btn-sm" onclick="admEditArticle(' + i + ')">Modifier</button>'
+          + '<button class="adm-btn-sm del" onclick="admDeleteArticle(' + i + ')">Supprimer</button>'
+          + '</div>' : '')
+      + '</div>';
   });
 
-  html += admUnlocked ? `<button class="adm-add-btn" onclick="admNewArticle()">+ Nouvel article</button>` : '';
+  if(admUnlocked){
+    html += '<button class="adm-add-btn" onclick="admNewArticle()">+ Nouvel article</button>';
+  }
 
   if(admEditIdx !== null){
-    const a = admEditIdx === 'new' ? {type:'analyse',title:'',excerpt:'',date:'',url:'#'} : articles[admEditIdx];
-    html += `<div class="adm-form" id="adm-form">
-      <label>TYPE</label>
-      <select id="af-type">
-        <option value="analyse"${a.type==='analyse'?' selected':''}>Analyse</option>
-        <option value="macro"${a.type==='macro'?' selected':''}>Macro</option>
-        <option value="thread"${a.type==='thread'?' selected':''}>Thread</option>
-        <option value="note"${a.type==='note'?' selected':''}>Note</option>
-      </select>
-      <label>TITRE</label>
-      <input id="af-title" type="text" value="${(a.title||'').replace(/"/g,'&quot;')}">
-      <label>EXTRAIT</label>
-      <textarea id="af-excerpt">${a.excerpt||''}</textarea>
-      <label>DATE</label>
-      <input id="af-date" type="text" value="${a.date||''}">
-      <label>URL</label>
-      <input id="af-url" type="text" value="${a.url||'#'}">
-      <div class="adm-form-actions">
-        <button class="adm-btn cancel" onclick="admCancelEdit()">Annuler</button>
-        <button class="adm-btn" onclick="admSaveArticle()">Enregistrer</button>
-      </div>
-    </div>`;
+    var a = admEditIdx === 'new' ? {type:'analyse',title:'',excerpt:'',date:'',url:'#'} : articles[admEditIdx];
+    if(a){
+      html += '<div class="adm-form" id="adm-form">'
+        + '<label>TYPE</label>'
+        + '<select id="af-type">'
+        + '<option value="analyse"' + (a.type==='analyse'?' selected':'') + '>Analyse</option>'
+        + '<option value="macro"' + (a.type==='macro'?' selected':'') + '>Macro</option>'
+        + '<option value="thread"' + (a.type==='thread'?' selected':'') + '>Thread</option>'
+        + '<option value="note"' + (a.type==='note'?' selected':'') + '>Note</option>'
+        + '</select>'
+        + '<label>TITRE</label>'
+        + '<input id="af-title" type="text" value="' + (a.title||'').replace(/"/g,'&quot;') + '">'
+        + '<label>EXTRAIT</label>'
+        + '<textarea id="af-excerpt">' + (a.excerpt||'') + '</textarea>'
+        + '<label>DATE</label>'
+        + '<input id="af-date" type="text" value="' + (a.date||'') + '">'
+        + '<label>URL</label>'
+        + '<input id="af-url" type="text" value="' + (a.url||'#') + '">'
+        + '<div class="adm-form-actions">'
+        + '<button class="adm-btn cancel" onclick="admCancelEdit()">Annuler</button>'
+        + '<button class="adm-btn" onclick="admSaveArticle()">Enregistrer</button>'
+        + '</div></div>';
+    }
   }
 
   el.innerHTML = html;
+  if(admEditIdx !== null) setTimeout(function(){ var f=document.getElementById('adm-form'); if(f) f.scrollIntoView({behavior:'smooth'}); }, 50);
 }
 
-function refreshDots(){
-  countryG.selectAll('path').attr('class', d => {
-    const name = N2N[+d.id];
-    return 'country'+(name && DATA[name] && DATA[name].articles.length ? ' has-data' : '');
-  });
-}
-
-document.getElementById('adm-export-btn').addEventListener('click', () => {
-  const json = JSON.stringify(DATA, null, 2);
-  const blob = new Blob([`const DATA = ${json};`], {type:'text/javascript'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'data.js';
-  a.click();
-});
-
-}; // fin window.onload
-
-// ── Fonctions admin globales (onclick inline) ──────────
-function admEditArticle(i){ admEditIdx=i; admRenderRight(); setTimeout(()=>document.getElementById('adm-form')?.scrollIntoView({behavior:'smooth'}),50); }
-function admNewArticle(){ admEditIdx='new'; admRenderRight(); setTimeout(()=>document.getElementById('adm-form')?.scrollIntoView({behavior:'smooth'}),50); }
+function admEditArticle(i){ admEditIdx=i; admRenderRight(); }
+function admNewArticle(){ admEditIdx='new'; admRenderRight(); }
 function admCancelEdit(){ admEditIdx=null; admRenderRight(); }
-function admDeleteArticle(i){ if(!confirm('Supprimer cet article ?'))return; DATA[admSelCountry].articles.splice(i,1); admEditIdx=null; admRenderRight(); refreshDots(); }
-function admSaveArticle(){ const art={type:document.getElementById('af-type').value,title:document.getElementById('af-title').value.trim(),excerpt:document.getElementById('af-excerpt').value.trim(),date:document.getElementById('af-date').value.trim(),url:document.getElementById('af-url').value.trim()||'#'}; if(!art.title){alert('Le titre est obligatoire.');return;} if(!DATA[admSelCountry])DATA[admSelCountry]={region:'',tags:[],lat:0,lon:0,articles:[]}; if(admEditIdx==='new'){DATA[admSelCountry].articles.push(art);}else{DATA[admSelCountry].articles[admEditIdx]=art;} admEditIdx=null; admRenderRight(); refreshDots(); }
+
+function admDeleteArticle(i){
+  if(!confirm('Supprimer cet article ?')) return;
+  DATA[admSelCountry].articles.splice(i, 1);
+  admEditIdx = null;
+  admRenderRight();
+}
+
+function admSaveArticle(){
+  var art = {
+    type: document.getElementById('af-type').value,
+    title: document.getElementById('af-title').value.trim(),
+    excerpt: document.getElementById('af-excerpt').value.trim(),
+    date: document.getElementById('af-date').value.trim(),
+    url: document.getElementById('af-url').value.trim() || '#'
+  };
+  if(!art.title){ alert('Le titre est obligatoire.'); return; }
+  if(!DATA[admSelCountry]) DATA[admSelCountry] = {region:'',tags:[],lat:0,lon:0,articles:[]};
+  if(admEditIdx === 'new'){
+    DATA[admSelCountry].articles.push(art);
+  } else {
+    DATA[admSelCountry].articles[admEditIdx] = art;
+  }
+  admEditIdx = null;
+  admRenderRight();
+}
+
 </script>
 <!-- ADMIN PANEL -->
 <div id="admin-overlay">
