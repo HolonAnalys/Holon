@@ -449,23 +449,23 @@ document.addEventListener('keydown', function(e){
   }
 });
 
-document.getElementById('logo-wrap').addEventListener('dblclick', function(){
-  var o = document.getElementById('admin-overlay');
-  o.classList.toggle('open');
-  if(o.classList.contains('open')) admRenderCountryList();
-});
-
-document.getElementById('adm-close').addEventListener('click', function(){
-  document.getElementById('admin-overlay').classList.remove('open');
-});
-
-document.getElementById('adm-export-btn').addEventListener('click', function(){
-  var json = JSON.stringify(DATA, null, 2);
-  var blob = new Blob(['const DATA = ' + json + ';'], {type:'text/javascript'});
-  var a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'data.js';
-  a.click();
+document.addEventListener('DOMContentLoaded', function(){
+  document.getElementById('logo-wrap').addEventListener('dblclick', function(){
+    var o = document.getElementById('admin-overlay');
+    o.classList.toggle('open');
+    if(o.classList.contains('open')) admRenderCountryList();
+  });
+  document.getElementById('adm-close').addEventListener('click', function(){
+    document.getElementById('admin-overlay').classList.remove('open');
+  });
+  document.getElementById('adm-export-btn').addEventListener('click', function(){
+    var json = JSON.stringify(DATA, null, 2);
+    var blob = new Blob(['const DATA = ' + json + ';'], {type:'text/javascript'});
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'data.js';
+    a.click();
+  });
 });
 
 function admRenderCountryList(){
